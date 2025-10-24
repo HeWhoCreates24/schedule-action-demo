@@ -1,0 +1,39 @@
+name: Daily Commit
+
+on:
+  schedule:
+    # Runs once per day at 03:17 UTC (specific hour+minute, no wildcards)
+    - cron: '17 3 * * *'
+  # Lets you trigger it on demand so you can verify now
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-commit
+  cancel-in-progress: false
+
+jobs:
+  commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      # Step name includes your email exactly as required
+      - name: Set Git identity (24f2008463@ds.study.iitm.ac.in)
+        run: |
+          git config user.name "daily-commit-bot"
+          git config user.email "24f2008463@ds.study.iitm.ac.in"
+
+      - name: Add commit (24f2008463@ds.study.iitm.ac.in)
+        run: |
+          mkdir -p .github/heartbeats
+          # Overwrite a file with the current UTC timestamp so there's always a diff
+          echo "run=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" > .github/heartbeats/last.txt
+          git add .github/heartbeats/last.txt
+          git commit -m "chore: daily heartbeat $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          git push
